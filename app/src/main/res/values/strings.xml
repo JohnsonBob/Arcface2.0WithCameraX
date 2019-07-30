@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Arcface2.0WithCameraX</string>
+    <string name="permission_denied">权限被拒绝！</string>
+    <string name="init_failed">引擎初始化失败，错误码为 %d</string>
 </resources>

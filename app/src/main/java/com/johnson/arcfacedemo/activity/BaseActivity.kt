@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -39,6 +40,8 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
 
         // 添加到Activity工具类
 //        ActivityUtil.getInstance().addActivity(this, javaClass)
+        //保持亮屏
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         mactivity = this
 
@@ -112,7 +115,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
      * @param requestCode  请求码
      * @param grantResults 结果集
      */
-    fun doRequestPermissionsResult(requestCode: Int, grantResults: IntArray) {}
+    open fun doRequestPermissionsResult(requestCode: Int, grantResults: IntArray) {}
 
     /**
      * 使用AndroidUtilCode框架做屏幕适配

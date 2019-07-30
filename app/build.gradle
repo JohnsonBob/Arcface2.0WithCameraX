@@ -40,8 +40,14 @@ dependencies {
     //主要用于屏幕适配
     implementation 'com.blankj:utilcodex:1.25.0'
 
-
+    //cameraX
     implementation "androidx.camera:camera-core:$camerax_version"
     // If you want to use Camera2 extensions
     implementation "androidx.camera:camera-camera2:$camerax_version"
+
+    //rxjava
+    implementation "io.reactivex.rxjava2:rxkotlin:2.3.0"
+//    implementation "io.reactivex:rxandroid:2.1.1"
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation "io.reactivex.rxjava2:rxjava:2.2.10"
 }

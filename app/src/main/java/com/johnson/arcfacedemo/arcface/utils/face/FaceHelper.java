@@ -29,7 +29,7 @@ public class FaceHelper {
     /**
      * fr 线程数，建议和ft初始化时的maxFaceNum相同
      */
-    private int frThreadNum = 10;
+    private int frThreadNum = 5;
 
     private List<FaceInfo> faceInfoList = new ArrayList<>();
     private List<LivenessInfo> livenessInfoList = new ArrayList<>();

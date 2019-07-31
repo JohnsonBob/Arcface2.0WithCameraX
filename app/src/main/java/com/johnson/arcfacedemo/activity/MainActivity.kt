@@ -15,7 +15,6 @@ import android.view.Surface
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.Toast
-import androidx.annotation.Nullable
 import androidx.camera.core.*
 import com.arcsoft.face.*
 import com.johnson.arcfacedemo.arcface.faceserver.CompareResult
@@ -29,17 +28,10 @@ import com.johnson.arcfacedemo.arcface.utils.face.RequestFeatureStatus
 import com.johnson.arcfacedemo.common.Constants
 import kotlinx.android.synthetic.main.activity_main.*
 import com.johnson.arcfacedemo.utils.ImageUtil
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.Consumer
-import io.reactivex.schedulers.Schedulers
 import java.io.ByteArrayOutputStream
 import java.util.ArrayList
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 
 class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
@@ -58,7 +50,7 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
     private val ACTION_REQUEST_PERMISSIONS = 0x001
     private var faceEngine: FaceEngine? = null
     private var afCode = -1
-    private val MAX_DETECT_NUM = 10
+    private val MAX_DETECT_NUM = 5
     private val TAG = "MainActivity"
     private var faceHelper: FaceHelper? = null
     private var previeWidth = -1
@@ -67,10 +59,19 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
     private val SIMILAR_THRESHOLD = 0.8f
     private var compareResultList: MutableList<CompareResult> = arrayListOf()
     private var drawHelper: DrawHelper? = null
+    private var isGetFaceId = false
     /**
      * 活体检测的开关
      */
     private val livenessDetect = false
+
+
+    private var tempWidth = -1
+    private var tempHeight = -1
+    private var tempdata: ByteArray? = null
+    private var temprect: Rect? = null
+    private var firstOne = true
+    private var tempbitmap: Bitmap? = null
 
 
     override fun setupViews() {
@@ -108,9 +109,9 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
                 tv_viewFinder.surfaceTexture = it.surfaceTexture
                 updateTransform()
 
-                previeWidth = it.textureSize.width
-                previeHeight = it.textureSize.height
-                initFaceHelp()
+//                previeWidth = it.textureSize.width
+//                previeHeight = it.textureSize.height
+//                initFaceHelp()
             }
 
 
@@ -148,9 +149,9 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
         val analyzerThread = HandlerThread("LuminosityAnalysis").apply { start() }
         val analysisConfig = ImageAnalysisConfig.Builder()
             // 分辨率
-            .setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
+//            .setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
             // 宽高比例
-            .setTargetAspectRatio(Rational(tv_viewFinder.width, tv_viewFinder.height))
+//            .setTargetAspectRatio(Rational(tv_viewFinder.width, tv_viewFinder.height))
             // 图像渲染模式
             .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
             // 设置回调的线程
@@ -163,28 +164,48 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
         // setAnalyzer 传入实现了 analyze 接口的类
         analysis.setAnalyzer { image, rotationDegrees ->
             // 可以得到的一些图像信息，参见 ImageProxy 类相关方法
-            val rect = image.cropRect
+            temprect = image.cropRect
+//            val type = image.format
 //            previeWidth = image.width
 //            previeHeight = image.height
+            tempWidth = image.width
+            tempHeight = image.height
+            if (firstOne) {
+                firstOne = false
+                previeWidth = tempWidth
+                previeHeight = tempHeight
+                initFaceHelp()
+            }
 
 //            val buffer = image.planes[0].buffer
 //            val bytes = ByteArray(buffer.remaining())
 //            buffer.get(bytes)
+            tempdata = ImageUtil.getBytesFromImageAsType(image.image, ImageUtil.NV21)
+            doGetFaceCode(tempdata, tempWidth, tempHeight, temprect)
 
-            val bytes1 = ImageUtil.getBytesFromImageAsType(image.image, ImageUtil.NV21)
 
-            val yuv = YuvImage(bytes1, ImageFormat.NV21, previeWidth, previeHeight, null)
-            val ops = ByteArrayOutputStream()
-            yuv.compressToJpeg(rect, 60, ops)
-            val data = ops.toByteArray()
-            val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
+        }
+        return analysis
+    }
 
-            val a = 10
+    private fun doGetFaceCode(data: ByteArray?, width: Int, height: Int, rect: Rect?) {
+        if (isGetFaceId || data == null || rect == null) return
+        thread {
+            isGetFaceId = true
+
+
+//            val yuv = YuvImage(data, ImageFormat.NV21, width, height, null)
+//            val ops = ByteArrayOutputStream()
+//            yuv.compressToJpeg(rect, 60, ops)
+//            val data1 = ops.toByteArray()
+//            tempbitmap = BitmapFactory.decodeByteArray(data1, 0, data.size)
+//
+//            val a = 10
 
 
             face_rect_view.clearFaceInfo()
 
-            val facePreviewInfoList = faceHelper?.onPreviewFrame(bytes1)
+            val facePreviewInfoList = faceHelper?.onPreviewFrame(data)
             if (facePreviewInfoList != null && drawHelper != null) {
                 val drawInfoList = ArrayList<DrawInfo>()
                 for (i in facePreviewInfoList.indices) {
@@ -202,8 +223,21 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
                 drawHelper?.draw(face_rect_view, drawInfoList)
             }
 
+            if(facePreviewInfoList != null){
+                for (i in facePreviewInfoList.indices) {
+                    faceHelper?.requestFaceFeature(
+                        data,
+                        facePreviewInfoList.get(i).faceInfo,
+                        width,
+                        height,
+                        FaceEngine.CP_PAF_NV21,
+                        facePreviewInfoList.get(i).trackId
+                    )
+                }
+            }
+
+            isGetFaceId = false
         }
-        return analysis
     }
 
     override fun onGlobalLayout() {
@@ -271,13 +305,18 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
 
 
         }
+//        val matrix = Matrix()
+//        tv_viewFinder.getTransform(matrix)
+//
+//        var a: FloatArray = FloatArray(10)
+//        matrix.getValues(a)
 
         drawHelper = DrawHelper(
             previeWidth,
             previeHeight,
             face_rect_view.width,
             face_rect_view.height,
-            0,
+            tv_viewFinder.display.rotation,
             0,
             false
         )

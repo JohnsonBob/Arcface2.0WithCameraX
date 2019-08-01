@@ -193,7 +193,7 @@ public class DrawHelper {
         canvas.drawPath(mPath, paint);
 
 
-        if (drawInfo.getName() == null) {
+        /*if (drawInfo.getName() == null) {
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
             paint.setTextSize(rect.width() / 8);
 
@@ -207,7 +207,7 @@ public class DrawHelper {
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
             paint.setTextSize(rect.width() / 8);
             canvas.drawText(drawInfo.getName(), rect.left, rect.top - 10, paint);
-        }
+        }*/
     }
 
     public void setPreviewWidth(int previewWidth) {

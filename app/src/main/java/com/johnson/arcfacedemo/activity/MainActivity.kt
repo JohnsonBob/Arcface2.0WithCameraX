@@ -384,75 +384,7 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
     }
 
     private fun searchFace(frFace: FaceFeature, requestId: Int?) {
-        /*Observable
-            .create(ObservableOnSubscribe<Any> { emitter ->
-                //                        Log.i(TAG, "subscribe: fr search start = " + System.currentTimeMillis() + " trackId = " + requestId);
-                val compareResult = FaceServer.getInstance().getTopOfFaceLib(frFace)
-                //                        Log.i(TAG, "subscribe: fr search end = " + System.currentTimeMillis() + " trackId = " + requestId);
-                if (compareResult == null) {
-//                    emitter.onError(null)
-                } else {
-                    emitter.onNext(compareResult)
-                }
-            })
-            .subscribeOn(Schedulers.computation())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : Observer<CompareResult> {
 
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
-
-                override fun onNext(compareResult: CompareResult) {
-                    if (compareResult == null || compareResult!!.userName == null) {
-                        requestFeatureStatusMap.put(requestId!!, RequestFeatureStatus.FAILED)
-                        faceHelper?.addName(requestId, "VISITOR $requestId")
-                        return
-                    }
-
-                    //                        Log.i(TAG, "onNext: fr search get result  = " + System.currentTimeMillis() + " trackId = " + requestId + "  similar = " + compareResult.getSimilar());
-                    if (compareResult!!.similar > SIMILAR_THRESHOLD) {
-                        var isAdded = false
-                        if (compareResultList == null) {
-                            requestFeatureStatusMap.put(requestId!!, RequestFeatureStatus.FAILED)
-                            faceHelper?.addName(requestId, "VISITOR $requestId")
-                            return
-                        }
-                        for (compareResult1 in compareResultList) {
-                            if (compareResult1.trackId === requestId) {
-                                isAdded = true
-                                break
-                            }
-                        }
-                        if (!isAdded) {
-                            //对于多人脸搜索，假如最大显示数量为 MAX_DETECT_NUM 且有新的人脸进入，则以队列的形式移除
-                            if (compareResultList.size >= MAX_DETECT_NUM) {
-                                compareResultList.removeAt(0)
-
-                            }
-                            //添加显示人员时，保存其trackId
-                            compareResult?.trackId = requestId
-                            compareResultList.add(compareResult)
-
-                        }
-                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.SUCCEED)
-                        faceHelper?.addName(requestId, compareResult!!.userName)
-
-                    } else {
-                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED)
-                        faceHelper?.addName(requestId, "VISITOR $requestId")
-                    }
-                }
-
-                override fun onError(e: Throwable) {
-                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED)
-                }
-
-                override fun onComplete() {
-
-                }
-            })*/
         val a = 10
     }
 

@@ -9,6 +9,7 @@ import android.graphics.*
 import android.util.Size
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
 import android.view.Surface
@@ -90,28 +91,25 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
      */
     fun startCamera() {
         try {
+            val metrics = DisplayMetrics().also { tv_viewFinder.display.getRealMetrics(it) }
+            val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
+
             val previewConfig = PreviewConfig.Builder().apply {
-                setTargetAspectRatio(Rational(1, 1))
-                setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
-            }.setLensFacing(lensFacing).build()
+                setLensFacing(lensFacing)
+                setTargetAspectRatio(screenAspectRatio)
+                setTargetRotation(tv_viewFinder.display.rotation)
+//                setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
+            }.build()
 
             // Build the viewfinder use case
             val preview = Preview(previewConfig)
-
-            // Every time the viewfinder is updated, recompute layout
             preview.setOnPreviewOutputUpdateListener {
-
-                // To update the SurfaceTexture, we have to remove it and re-add it
                 val parent = tv_viewFinder.parent as ViewGroup
                 parent.removeView(tv_viewFinder)
                 parent.addView(tv_viewFinder, 0)
 
                 tv_viewFinder.surfaceTexture = it.surfaceTexture
                 updateTransform()
-
-//                previeWidth = it.textureSize.width
-//                previeHeight = it.textureSize.height
-//                initFaceHelp()
             }
 
 
@@ -145,18 +143,23 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
     }
 
     fun buildImageAnalysisUseCase(): ImageAnalysis {
+
+        val metrics = DisplayMetrics().also { tv_viewFinder.display.getRealMetrics(it) }
+        val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
         // 分析器配置 Config 的建造者
         val analyzerThread = HandlerThread("LuminosityAnalysis").apply { start() }
-        val analysisConfig = ImageAnalysisConfig.Builder()
+        val analysisConfig = ImageAnalysisConfig.Builder().apply {
+            setLensFacing(lensFacing)
             // 分辨率
-//            .setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
+//            setTargetResolution(Size(tv_viewFinder.width, tv_viewFinder.height))
             // 宽高比例
-//            .setTargetAspectRatio(Rational(tv_viewFinder.width, tv_viewFinder.height))
+            setTargetAspectRatio(screenAspectRatio)
             // 图像渲染模式
-            .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
+            setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
             // 设置回调的线程
-            .setCallbackHandler(Handler(analyzerThread.looper))
-            .build()
+            setCallbackHandler(Handler(analyzerThread.looper))
+            setTargetRotation(tv_viewFinder.display.rotation)
+        }.build()
 
         // 创建分析器 ImageAnalysis 对象
         val analysis = ImageAnalysis(analysisConfig)
@@ -194,11 +197,11 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
             isGetFaceId = true
 
 
-//            val yuv = YuvImage(data, ImageFormat.NV21, width, height, null)
-//            val ops = ByteArrayOutputStream()
-//            yuv.compressToJpeg(rect, 60, ops)
-//            val data1 = ops.toByteArray()
-//            tempbitmap = BitmapFactory.decodeByteArray(data1, 0, data.size)
+            val yuv = YuvImage(data, ImageFormat.NV21, width, height, null)
+            val ops = ByteArrayOutputStream()
+            yuv.compressToJpeg(rect, 60, ops)
+            val data1 = ops.toByteArray()
+            tempbitmap = BitmapFactory.decodeByteArray(data1, 0, data1.size)
 //
 //            val a = 10
 
@@ -223,7 +226,7 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
                 drawHelper?.draw(face_rect_view, drawInfoList)
             }
 
-            if(facePreviewInfoList != null){
+            if (facePreviewInfoList != null) {
                 for (i in facePreviewInfoList.indices) {
                     faceHelper?.requestFaceFeature(
                         data,
@@ -242,7 +245,7 @@ class MainActivity : BaseActivity(), ViewTreeObserver.OnGlobalLayoutListener {
 
     override fun onGlobalLayout() {
         tv_viewFinder.getViewTreeObserver().removeOnGlobalLayoutListener(this)
-        if (hasPermission(*NEEDED_PERMISSIONS)) {
+        if (!hasPermission(*NEEDED_PERMISSIONS)) {
             requestPermission(ACTION_REQUEST_PERMISSIONS, *NEEDED_PERMISSIONS)
         } else {
             initEngine()
